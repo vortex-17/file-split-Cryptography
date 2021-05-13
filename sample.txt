@@ -1,0 +1,27 @@
+Arithmetic coding is superior in most respects to the
+better-known Huffman [lo] method. It represents information at least as compactly-sometimes considerably more so. Its performance is optimal without
+the need for blocking of input data. It encourages a
+clear separation between the model for representing
+data and the encoding of information with respect to
+that model. It accommodates adaptive models easily
+and is computationally efficient. Yet many authors
+and practitioners seem unaware of the technique.
+Indeed there is a widespread belief that Huffman
+coding cannot be improved upon.We aim to rectify this situation by presenting an
+accessible implementation of arithmetic coding and
+by detailing its performance characteristics. We start
+by briefly reviewing basic concepts of data compression and introducing the model-based approach that
+underlies most modern techniques. We then outline
+the idea of arithmetic coding using a simple example, before presenting programs for both encoding
+and decoding. In these programs the model occupies
+a separate module so that different models can easily
+be used. Next we discuss the construction of fixed
+and adaptive models and detail the compression
+efficiency ahgfgfexecution time of the programs,
+including the effect of different arithmetic word
+lengths on compression efficiency. Finally, we outline a few applications where arithmetic coding is
+appropriate. 
+ejklthweklrt
+elwjkrthwerklhtjlkewrhtjklewhrjklthwekljrhtjklwehrtiouweh
+eriotuweriotyewlukrhtyjkwlerhjkltywehjklrt;Huffmanerjklghdfjkbnvdjlsbvjklewrhtgwerhtoieruwiotuwerioptukldjfkldshtiue2rytihwejklrgnfewkljrthkleuwrhtjkldnfgjklwhkljh
+This is it. Thank you.
