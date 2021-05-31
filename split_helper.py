@@ -4,36 +4,78 @@ import sys
 from mongo_utils import insert_into_mongo, find_mongo
 import erasure
 import glob
+import blake3
+from Crypto.Cipher import Blowfish
+from Crypto import Random
+from struct import pack
+import re
+import string
+import config
+
+# directory_list = config["data_storage"]
+
+bs = Blowfish.block_size
+
+# iv = Random.new().read(bs)
 
 def encrypt(data,key):
-    encrypted_text = ""
-    # print("Key : ",key)
-    key = 0
-    for i in str(key)[:5]:
-        key += ord(i)
-    for i in data:
-        encrypted_text += chr(ord(i) + key)
 
-    return encrypted_text
+    """This function encrypts the data using symmetric algorithm"""
+
+    data = str(data)
+    printable = set(string.printable)
+    data = ''.join(list(filter(lambda x: x in printable, data)))
+    key = str(key)
+    data = data.encode("latin-1")
+    key = key.encode("latin-1")
+    cipher = Blowfish.new(key, Blowfish.MODE_ECB)
+    plen = bs - divmod(len(data),bs)[1]
+    padding = [plen]*plen
+    padding = pack('b'*plen, *padding)
+    # print(padding)
+    encrypted_text = cipher.encrypt(data + padding)
+    # encrypted_text = ""
+    # # print("Key : ",key)
+    # key = 0
+    # for i in str(key)[:5]:
+    #     key += ord(i)
+    # for i in data:
+    #     encrypted_text += chr(ord(i) + key)
+
+    return encrypted_text.decode("latin-1")
 
 def decrypt(data,key):
-    decrypted_text = ""
-    key = 0
-    for i in str(key)[:5]:
-        key += ord(i)
-    for i in data:
-        decrypted_text += chr(ord(i) - key)
 
-    return decrypted_text
+    """This function decrypts the data using symmetric algorithm"""
+
+    key = key.encode("latin-1")
+    data = data.encode("latin-1")
+    cipher = Blowfish.new(key, Blowfish.MODE_ECB)
+    decrypted_text = cipher.decrypt(data)
+    decrypted_text = decrypted_text.decode("latin-1")
+    printable = set(string.printable)
+    decrypted_text = ''.join(list(filter(lambda x: x in printable, decrypted_text)))
+    # decrypted_text = re.sub(r'[^\x20-\x7e]', '', decrypted_text)
+    # decrypted_text = ""
+    # key = 0
+    # for i in str(key)[:5]:
+    #     key += ord(i)
+    # for i in data:
+    #     decrypted_text += chr(ord(i) - key)
+
+    return str(decrypted_text)
 
 def hash_data(data):
-    result = hashlib.sha1(data.encode()) 
-    return result.hexdigest()
+    result = str(blake3.blake3(data.encode()).digest().hex())
+    # result = hashlib.sha1(data.encode()) 
+    return result
 
 def key_gen(data):
-    #temp solution
-    key_text = data[:10]
-    return hash_data(key_text)
+    """
+    This function generates the key that will be used to decrypt/encrypt next data chunk
+    """
+    key_text = data
+    return str(hash_data(key_text))[:8]
 
 def string_xor(string1,string2):
     num1 = ""
@@ -48,17 +90,6 @@ def string_xor(string1,string2):
 def check_file_string(filename):
     pass
 
-# def create_merkle_DAG(chunks):
-#     chunk_hash = []
-#     root_hash = hash_data(str(chunks[0]))
-#     chunk_hash.append(root_hash)
-#     prev_hash = root_hash
-#     for i in range(1,len(chunks)):
-#         curr_hash = str(hash_data(chunks[i] + str(prev_hash)))
-#         chunk_hash.append(curr_hash)
-#         prev_hash = curr_hash
-
-#     return chunk_hash
     
 def create_merkle_root(chunks):
     """
@@ -107,6 +138,10 @@ def proof_of_storage():
     pass
 
 def proof_of_auth(filename, merkle_root):
+    """
+    This function will authenticate the data using the merkel root
+    saved in the mongoDB
+    """
     root = find_mongo(filename)
     if root == None:
         print("No file found with that name.")
@@ -119,6 +154,9 @@ def proof_of_auth(filename, merkle_root):
 
 #this will create the name of the chunks 
 def create_filename(file_string, pwd = "password", n = 1):
+    """
+    This is will create filename of the chunks which will be unique
+    """
     file_list = []
     x = string_xor(file_string,pwd)
     for i in range(n):
@@ -128,14 +166,26 @@ def create_filename(file_string, pwd = "password", n = 1):
 
     return file_list
 
+def read_and_write_file(filename, mode):
+    filename = "parity/" + filename
+    f = open(filename, mode)
+    return f
+
+
 def create_parity_files(filename, p1,p2):
+    """
+    This function calls the erasure coding module 
+    to create parity chunks
+    """
     filename_p1 = hash_data(filename + "parity1") + ".txt"
     filename_p2 = hash_data(filename + "parity2") + ".txt"
-    f = open(filename_p1, "w")
+    # f = open(filename_p1, "w")
+    f = read_and_write_file(filename_p1, "w")
     f.write(str(p1))
     f.close()
 
-    f = open(filename_p2, "w")
+    # f = open(filename_p2, "w")
+    f = read_and_write_file(filename_p2, "w")
     f.write(str(p2))
     f.close()
 
@@ -154,6 +204,10 @@ def read_parity(filename):
 
     
 def write_file(file_name,pwd,n,file_chunks):
+    """
+    This function will write into the file the encrypted version of the 
+    data and call another function to create parity chunks
+    """
     if file_name == "":
         exit(1)
     hash_of_data = []
@@ -161,19 +215,26 @@ def write_file(file_name,pwd,n,file_chunks):
     filename = file_name
     file_name = file_name
     # print(len(file_chunks))
+    key = pwd
     for data in file_chunks:
-        print(data)
+        # print(len(data))
+        # print(data)
         # enc_data.append(erasure.encode(data))
-        key = key_gen(data)
+        # key = key_gen(data)
         hash_of_data.append(str(hash_data(data)))
         file_list = create_filename(file_name,pwd,1)
         for file_ in file_list:
-            f = open(file_, "w")
+            # print("file_")
+            f = open(file = file_, mode = "w", encoding = "latin-1")
             enc_d = encrypt(data,key)
             f.write(enc_d)
             enc_data.append(erasure.encode(enc_d))
-            print(enc_d + "/")
+            # print("hello1")
+            # print("Encrypted Data for the chunk : ", enc_d)
+            # print("\n\n")
+            # print("hello2")
             f.close()
+        key = key_gen(data)
         
         file_name = file_list[0]
     
@@ -192,6 +253,9 @@ def write_file(file_name,pwd,n,file_chunks):
 
 
 def retrieve_chunk(filename, pwd):
+    """
+    This function will retrieve chunks given the filename
+    """
     if filename == "":
         exit(1)
 
@@ -217,6 +281,10 @@ def retrieve_chunk(filename, pwd):
     return False,root_chunk
 
 def retrieve_all_chunks(filename, pwd):
+    """
+    This is the main function which will retrieve all chunks and 
+    check whether chunks are missing or not
+    """
     all_chunks = []
     no_of_chunks = 4
     file_chunk = filename
@@ -240,14 +308,19 @@ def retrieve_all_chunks(filename, pwd):
     return all_chunks
 
 def read_chunk(filename,chunks):
+    """
+    This function will read chunks and decrypt them
+    using the algorithm
+    """
     data = []
     for i in chunks:
         if i != "":
-            f = open(i, "r")
+            f = open(file = i, mode = "r", encoding = "latin-1")
             data.append(f.read())
             f.close()
 
         else:
+            print("No data")
             data.append("")
 
     # print("Data : ", data)
@@ -259,17 +332,27 @@ def read_chunk(filename,chunks):
         # print()
         # print("Parity 2 : ", p2)
         data = erasure.find(data,p1,p2)
+    elif missing > 2:
+        print("Majority of the chunks are missing. Cant recreate the file")
+        sys.exit(1)
 
     return data
 
 def join_chunks(filename,chunks_list,pwd):
+    """
+    This will join the chunks and create fresh merkle root
+    and compare it with the one stored in mongoDB
+    """
     original_text = ""
     chunks_of_data = []
     key = pwd
 
     #finding missing values
     for i in chunks_list:
+        # print(i)
         data = decrypt(i,key)
+        # print("Decrypted Data : ",data)
+        # print("\n\n")
         chunks_of_data.append(hash_data(data))
         original_text += data
         key = key_gen(data)
@@ -317,6 +400,9 @@ def join_chunks(filename,chunks_list,pwd):
 
 
 def find_file(filename):
+    """
+    This helper function checks whether the file exists or not
+    """
     file_list = list(glob.glob("*.txt"))
     if filename in file_list:
         return True
@@ -324,5 +410,5 @@ def find_file(filename):
         return False
 
 
-def logs():
-    pass
+# def logs():
+#     pass

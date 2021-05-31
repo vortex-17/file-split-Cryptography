@@ -4,22 +4,26 @@ from split import split, recreate_file
 import os
 import pyfiglet
 
-def main(filename):
-    result = pyfiglet.figlet_format("FILE SHARDING", font = "slant"  )
+def main():
+    result = pyfiglet.figlet_format("FILE SHARDER", font = "slant" )
     print(result)
+    print("Welcome to the file-split cryptography")
+    filename = str(input("Enter the filepath : "))
     if filename == "":
         print("Please enter the name of the file : ")
-    # if filechunks < 1:
-    #     print("The number of chunks should be greater than 1")
-    # print("Welcome to the file-split cryptography")
-    # pwd = str(input("Create new password for the protection of the file : "))
-    pwd = "sangam"
-    # split(filename,pwd,1)  
-    recreate_file(filename, pwd)
+    
+    pwd = str(input("Enter the password: "))
+    mode = str(input("Enter the mode for the file operation (read/create): "))
+    if mode == "read":
+        recreate_file(filename, pwd)
+    elif mode == "create":
+        split(filename,pwd,1)
+    else:
+        print("Wrong Option. Try again !")
+    
 
-# filename = str(input("Enter the filename : "))
-filename = "sample.txt"
-main(filename)
+if __name__ == "__main__":
+    main()
     
 
 
