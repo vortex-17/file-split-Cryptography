@@ -167,7 +167,7 @@ def create_filename(file_string, pwd = "password", n = 1):
     return file_list
 
 def read_and_write_file(filename, mode):
-    filename = "parity/" + filename
+    # filename = "parity/" + filename
     f = open(filename, mode)
     return f
 
