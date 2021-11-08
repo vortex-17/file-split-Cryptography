@@ -10,14 +10,14 @@ sys.setrecursionlimit(10000)
 getcontext().prec = 20000
 
 def encode(data):
-    enc = data.encode("latin1")
+    enc = data.encode("latin-1")
     # print(enc)
     data_int = int.from_bytes(enc, "little")
     return data_int
 
 def decode(enc):
     dec = enc.to_bytes((enc.bit_length() + 7) // 8, "little")
-    data = dec.decode("latin1")
+    data = dec.decode("latin-1")
     return data
 
 def create_parity_block(content):

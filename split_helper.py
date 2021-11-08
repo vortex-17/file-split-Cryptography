@@ -23,8 +23,8 @@ def encrypt(data,key):
     """This function encrypts the data using symmetric algorithm"""
 
     data = str(data)
-    printable = set(string.printable)
-    data = ''.join(list(filter(lambda x: x in printable, data)))
+    # printable = set(string.printable)
+    # data = ''.join(list(filter(lambda x: x in printable, data)))
     key = str(key)
     data = data.encode("latin-1")
     key = key.encode("latin-1")
@@ -274,7 +274,7 @@ def retrieve_chunk(filename, pwd):
 
     
     if found == False:
-        print("None of the chunks of the file could be found. Somebody has tampered with your file system.")
+        print("A file could not be found. Somebody has tampered with your file system.")
         return False,root_chunk
         # exit(1)
 
@@ -315,9 +315,10 @@ def read_chunk(filename,chunks):
     data = []
     for i in chunks:
         if i != "":
-            f = open(file = i, mode = "r", encoding = "latin-1")
+            f = open(file = i, mode = "r", encoding = "latin-1") 
             data.append(f.read())
             f.close()
+            os.remove(i)
 
         else:
             print("No data")

@@ -1,8 +1,1 @@
-passwords
-Password 1 = cryptography1
-Password 2 = cryptography2
-Password 3 = cryptography3
-Password 4 = cryptography4
-Password 5 = cryptography5
-Password 6 = cryptography6
-####
+This is a sample file.######
